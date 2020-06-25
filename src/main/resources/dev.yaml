@@ -1,0 +1,37 @@
+locationMapping:
+ locationDescription:
+   BEN-SG: "Beauna Vista Singapore"
+   KLG-MY: "Klang Malaysia"
+   BU-MY: "Bataung Malaysia"
+   TAR-MY: "Tamrat Malaysia"
+   BL-SG: "Beauna Vista Singapore"
+
+company:
+  code1: "TransNational"
+  code2: "FirstCoach"   
+  
+http:
+ connection:
+  host: "localhost"
+  port: "8082"
+ firstCoachSysApi:
+  host: "first-coach-sys-api.us-e2.cloudhub.io"
+  port: "443"
+  basePath: "/api"
+  trustStore:
+   path: "clienttruststore.jks"
+   password: "![QTFSLtDmhH5MBapVeElr/w==]"
+ transnationalSysApi:
+  host: "localhost"
+  port: "8083"
+  basePath: "/api"
+ 
+authentication:
+ username: "admin"
+ password: "![rXVdtB6LMfQ=]"
+   
+   
+  
+  
+  
+   

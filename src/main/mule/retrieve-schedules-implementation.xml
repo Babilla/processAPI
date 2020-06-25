@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	
+	<flow name="retrieve-schedules-implementationFlow" doc:id="bd16423f-97da-4b99-9336-228bce9dd5f1" >
+		<ee:transform doc:name="Transform Message" doc:id="1503ad0f-3a35-4323-a281-9bcc2a1b628a" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="companyCode" ><![CDATA[message.attributes.queryParams.'companyCode']]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<choice doc:name="Choice" doc:id="af9a3fb8-7c88-432d-ab1b-464cc2d9a6b8" >
+			<when expression='#[vars.companyCode == "TransNational"]'>
+				<flow-ref doc:name="retrieveTransNationalSchedulesFlow" doc:id="ef035e8d-982a-4112-b47d-3dbf5ddb12e5" name="retrieveTransNationalSchedulesFlow"/>
+			</when>
+			<when expression='#[vars.companyCode == "FirstCoach"]'>
+				<flow-ref doc:name="retrieveFirstCoachScheduleFlow" doc:id="36b63b92-07e4-4ee9-b512-daad515bfca5" name="retrieveFirstCoachScheduleFlow"/>
+			</when>
+			<otherwise>
+				<flow-ref doc:name="retrieve-consolidated-schedulesFlow" doc:id="cef70faf-b566-4db1-b6db-e7ee80e8eb22" name="retrieve-consolidated-schedulesFlow"/>
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="retrieveTransNationalSchedulesFlow" doc:id="7449b05c-12f9-4005-a5e4-cb82907799ba" >
+		<try doc:name="Try" doc:id="1d9b32f1-1a3f-4cc8-88ef-dc48865cadca" >
+			<http:request method="GET" doc:name="transNationalSystemCall" doc:id="73704b28-9d97-4724-bfb2-0ddf5e116c6a" config-ref="HTTP_Request_configuration1" path="/sea/transnational/schedules"/>
+			<error-handler >
+				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="71f0a8c3-b47a-4495-93cd-1e3589ae364c" >
+					<ee:transform doc:name="Transform Message" doc:id="a8a82147-fe33-4970-ac51-de14b99761e8" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+[]]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+				</on-error-continue>
+			</error-handler>
+		</try>
+	</flow>
+	<flow name="retrieveFirstCoachScheduleFlow" doc:id="83361b66-1d20-45d9-9951-f061b325915d" >
+		<http:request method="GET" doc:name="firstCoachSystemCall" doc:id="0a179079-f3fd-4de7-8162-04e994fa3343" config-ref="first-coach-sysApi-request-config" path="/sea/first/schedules">
+			<http:query-params ><![CDATA[#[output application/java
+---
+{
+	destinationLocationCode : vars.destinationLocationCode,
+	departureLocationCode : vars.departureLocationCode
+}]]]></http:query-params>
+		</http:request>
+		<ee:transform doc:name="Transform Message" doc:id="fbe26889-fce3-4f64-b4a9-77c3543498a2" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[ %dw 2.0
+output application/json
+---
+{
+	departureSchedules: payload.departureSchedules map ( departureSchedule , indexOfDepartureSchedule ) -> {
+		availableSeats: departureSchedule.availableSeats,
+		departureDateTime: departureSchedule.departureDateTime,
+		travelRoute: {
+			destinationLocation: {
+				locationCode: departureSchedule.travelRoute.destinationLocation.locationCode,
+				locationDesc: p('secure::locationMapping.locationDescription.' ++ departureSchedule.travelRoute.destinationLocation.locationCode)
+			},
+			originLocation: {
+				locationCode: departureSchedule.travelRoute.originLocation.locationCode,
+				locationDesc: p('secure::locationMapping.locationDescription.' ++ departureSchedule.travelRoute.originLocation.locationCode)
+			}
+		}
+	}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="retrieve-consolidated-schedulesFlow" doc:id="165ef054-568c-4f3a-8ccb-a1752674f6a7" >
+		<scatter-gather doc:name="Scatter-Gather" doc:id="c093c6f8-dd80-4506-b552-2d4e476c8191" >
+			<route >
+				<try doc:name="Try" doc:id="89dd1afe-1062-42f8-9f9e-18638bf29879" >
+					<http:request method="GET" doc:name="firstCoachSystemCall" doc:id="ed51f098-b155-41a1-b01d-078d5bdadbb3" config-ref="first-coach-sysApi-request-config" path="/sea/first/schedules">
+					<http:query-params><![CDATA[#[output application/java
+---
+{
+	destinationLocationCode : vars.destinationLocationCode,
+	departureLocationCode : vars.departureLocationCode
+}]]]></http:query-params>
+				</http:request>
+					<error-handler >
+						<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="6def6dd9-556f-467a-8368-b506508d81fd" >
+							<ee:transform doc:name="Transform Message" doc:id="49f627e6-961d-4ca6-8424-187b865a785a" >
+								<ee:message >
+									<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+[]]]></ee:set-payload>
+								</ee:message>
+							</ee:transform>
+						</on-error-continue>
+					</error-handler>
+				</try>
+				<ee:transform doc:name="Transform Message" doc:id="032f7863-3d5d-491b-a4b2-f566982f554b" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[ %dw 2.0
+output application/json
+---
+{
+	departureSchedules: payload.departureSchedules map ( departureSchedule , indexOfDepartureSchedule ) -> {
+		availableSeats: departureSchedule.availableSeats,
+		departureDateTime: departureSchedule.departureDateTime,
+		travelRoute: {
+			destinationLocation: {
+				locationCode: departureSchedule.travelRoute.destinationLocation.locationCode,
+				locationDesc: p('secure::locationMapping.locationDescription.' ++ departureSchedule.travelRoute.destinationLocation.locationCode)
+			},
+			originLocation: {
+				locationCode: departureSchedule.travelRoute.originLocation.locationCode,
+				locationDesc: p('secure::locationMapping.locationDescription.' ++ departureSchedule.travelRoute.originLocation.locationCode)
+			}
+		}
+	}
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</route>
+			<route>
+				<try doc:name="Try" doc:id="c0e87e68-7338-4577-b105-f5bab05b16ef" >
+					<http:request method="GET" doc:name="transNationalSystemCall" doc:id="9583b1f5-cc1a-4c17-982f-99c8a722ee7a" config-ref="HTTP_Request_configuration1" path="/sea/transnational/schedules"/>
+					<error-handler >
+						<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="b3a71e4e-2c17-4b49-8670-068ee770afd0" >
+							<ee:transform doc:name="Transform Message" doc:id="17f7f28d-7a1f-4836-9938-917a82ad2930" >
+								<ee:message >
+									<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+[]]]></ee:set-payload>
+								</ee:message>
+							</ee:transform>
+						</on-error-continue>
+					</error-handler>
+				</try>
+			</route>
+		</scatter-gather>
+		<ee:transform doc:name="Transform Message" doc:id="5f082a0e-9325-4fd0-8324-e412f59f36b6" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+flatten(payload..payload)]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>

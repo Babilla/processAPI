@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
+    
+    <ee:object-store-caching-strategy name="Caching_Strategy" doc:name="Caching Strategy" doc:id="348e5b17-5cab-4a3c-9da8-1c10ef46d748" keyGenerationExpression="#[attributes.queryParams.companyCode ++ attributes.queryParams.departureLocationCode]" >
+		<os:private-object-store entryTtl="20" entryTtlUnit="DAYS" />
+	</ee:object-store-caching-strategy>
+	<flow name="retrieve-routes-schedules-pro-api-main">
+        <http:listener config-ref="retrieve-routes-schedules-pro-api-httpListenerConfig" path="/api/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body><![CDATA[#[error.muleMessage.typedValue default error.detailedDescription]]]></http:body>
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:error-response>
+        </http:listener>
+        <flow-ref doc:name="audit-log-subflow" doc:id="ad932aba-9b47-4fda-9422-b99c019f7b88" name="audit-log-subflow"/>
+		<apikit:router config-ref="retrieve-routes-schedules-pro-api-config" />
+        
+    </flow>
+    <flow name="retrieve-routes-schedules-pro-api-console">
+        <http:listener config-ref="retrieve-routes-schedules-pro-api-httpListenerConfig" path="/console/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:console config-ref="retrieve-routes-schedules-pro-api-config" />
+    </flow>
+    <flow name="get:\booking\(transportType)\routes:retrieve-routes-schedules-pro-api-config">
+        <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core">
+            <ee:variables>
+                <ee:set-variable variableName="transportType">attributes.uriParams.'transportType'</ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+		<ee:transform doc:name="Transform Message" doc:id="96552495-4e4c-46b1-a7db-84b3045613e6" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="companyCode" ><![CDATA[message.attributes.queryParams.companyCode]]></ee:set-variable>
+				<ee:set-variable variableName="departureLocationCode" ><![CDATA[message.attributes.queryParams.departureLocationCode]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+   		<ee:cache doc:name="Cache" doc:id="3641f994-b5f0-4885-afa6-9f6668a59ea3" cachingStrategy-ref="Caching_Strategy">
+			<flow-ref doc:name="retrieve-routes-implementationFlow" doc:id="ba2d2561-48d5-49f2-a9a7-5ebba4733bd8" name="retrieve-routes-implementationFlow" />
+		</ee:cache>
+		<error-handler ref="globalError_Handler" />
+    </flow>
+    <flow name="get:\booking\(transportType)\schedules:retrieve-routes-schedules-pro-api-config">
+        <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core">
+            <ee:variables>
+                <ee:set-variable variableName="transportType">attributes.uriParams.'transportType'</ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+		<ee:transform doc:name="Transform Message" doc:id="93a3d15e-e817-4036-b461-b6873033576f" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="companyCode" ><![CDATA[message.attributes.queryParams.'companyCode']]></ee:set-variable>
+				<ee:set-variable variableName="departureLocationCode" ><![CDATA[message.attributes.queryParams.'departureLocationCode']]></ee:set-variable>
+				<ee:set-variable variableName="destinationLocationCode" ><![CDATA[message.attributes.queryParams.'departureLocationCode']]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="retrieveSchedulesImplementationFlow" doc:id="a44de12e-2e74-417d-a521-36c747b12d4a" name="retrieve-schedules-implementationFlow"/>
+    	<error-handler ref="globalError_Handler" />
+    </flow>
+	<error-handler name="httpError_Handler" doc:id="abf97662-4d7c-4052-891f-44ada2f9158d" >
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="d628a921-9e36-419f-b1a8-9935efeaeee9" when="#[error.muleMessage.typedValue != null]">
+			<set-variable value="#[error.muleMessage.typedValue.'error-code']" doc:name="httpStatus" doc:id="b27001e1-c2f4-4d0b-baec-e7ac01b3ad96" variableName="httpStatus"/>
+			<set-variable value="#[error.muleMessage.typedValue.message]" doc:name="errorMessage" doc:id="8c3e8a53-3174-4fee-b2c9-6726effb5a44" variableName="errorMessage"/>
+			<set-variable value="#[error.muleMessage.typedValue.'error-type']" doc:name="errorType" doc:id="f9de1ccf-c636-4dee-9841-177fbefc69ee" variableName="errorType"/>
+		</on-error-propagate>
+	</error-handler>
+</mule>

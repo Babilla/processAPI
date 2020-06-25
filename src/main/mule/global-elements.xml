@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties"
+	xmlns:tls="http://www.mulesoft.org/schema/mule/tls"
+	xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:min-log="http://www.mulesoft.org/schema/mule/min-log"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
+http://www.mulesoft.org/schema/mule/min-log http://www.mulesoft.org/schema/mule/min-log/current/mule-min-log.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd">
+	<http:listener-config name="retrieve-routes-schedules-pro-api-httpListenerConfig">
+        <http:listener-connection host="${secure::http.connection.host}" port="${secure::http.connection.port}"/>
+    </http:listener-config>
+    <apikit:config name="retrieve-routes-schedules-pro-api-config" api="retrieve-routes-schedules-pro-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+	<http:request-config name="first-coach-sysApi-request-config" doc:name="HTTP Request configuration" doc:id="95c63db9-dc70-489f-8503-ead8b18dd2fe" basePath="${secure::http.firstCoachSysApi.basePath}" >
+		<http:request-connection protocol="HTTPS" host="${secure::http.firstCoachSysApi.host}" port="${secure::http.firstCoachSysApi.port}" >
+			<tls:context >
+				<tls:trust-store path="${secure::http.firstCoachSysApi.trustStore.path}" password="${secure::http.firstCoachSysApi.trustStore.password}" type="jks" insecure="true" />
+			</tls:context>
+			<http:authentication >
+				<http:basic-authentication username="${secure::authentication.username}" password="${secure::authentication.password}" />
+			</http:authentication>
+		</http:request-connection>
+
+	</http:request-config>
+	<http:request-config name="trans-national-systemApi-request-config" doc:name="HTTP Request configuration" doc:id="6515a63b-02d1-4f01-b469-8ae94e4cc456" basePath="${secure::http.transnationalSysApi.basePath}" responseTimeout="30000">
+		<http:request-connection host="${secure::http.transnationalSysApi.host}" port="${secure::http.transnationalSysApi.port}" />
+	</http:request-config>
+	<http:request-config name="HTTP_Request_configuration1" doc:name="HTTP Request configuration" doc:id="8e6fe8e0-141e-497b-956d-e5573dc016f5" basePath="/api" >
+		<http:request-connection host="localhost" port="8085" />
+	</http:request-config>
+	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="45376e21-6f62-4f3c-84c9-6f4f5284b494" file="dev.yaml" key="victory" >
+		<secure-properties:encrypt algorithm="Blowfish" mode="ECB" />
+	</secure-properties:config>
+	<configuration doc:name="Configuration" doc:id="56457eeb-3f21-4af8-a2f8-e439feb13531" defaultErrorHandler-ref="globalError_Handler" />
+	<sub-flow name="audit-log-subflow" doc:id="11ab2c5f-771e-4588-ad59-95505a42fad3" >
+		<min-log:new doc:name="initiate transaction properties" doc:id="466caa77-2752-4f38-9a5a-850e3712b449" headers="#[attributes.headers]" target="loggingProperties"/>
+		<min-log:put doc:name="logMessageType" doc:id="0e5e78db-7ad6-4b7a-a142-c6798ddb6faa" key="logMessageType" value="INTERMEDIATE" transactionProperties="#[vars.loggingProperties]" target="loggingProperties"/>
+		<min-log:put doc:name="set application name" doc:id="f34d9824-3daf-48e0-95a3-3cfcaad4630c" key="applicationName" value="#[app.name]" transactionProperties="#[vars.loggingProperties]" target="loggingProperties"/>
+		<min-log:put doc:name="insert resource" doc:id="7953f291-8fc4-4da1-adc1-b58b291a5701" key="inboundUri" value="#[attributes.relativePath]" transactionProperties="#[vars.loggingProperties]" target="loggingProperties"/>
+		<min-log:put doc:name="Insert Method" doc:id="45dde4eb-d355-41fd-8c8b-31364238152a" key="httpMethod" value="#[attributes.method]" transactionProperties="#[vars.loggingProperties]" target="loggingProperties"/>
+		<min-log:put doc:name="insert scheme" doc:id="cd0a0e37-e5c0-4da6-836a-671ddc7357ee" key="scheme" value="#[attributes.scheme]" transactionProperties="#[vars.loggingProperties]" target="loggingProperties"/>
+	
+</sub-flow>
+</mule>
+

@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:min-log="http://www.mulesoft.org/schema/mule/min-log"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db" 
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/min-log http://www.mulesoft.org/schema/mule/min-log/current/mule-min-log.xsd">
+
+
+
+	<error-handler name="globalError_Handler" doc:id="c3ba10dc-4c2c-4cef-a41b-8c4ee089a402">
+	<on-error-continue type="APIKIT:BAD_REQUEST">
+                <set-variable value="#[400]" doc:name="Set the HTTP Status - 400" doc:id="8b519c33-7027-4ddc-a16c-76dc5a1ec2de" variableName="httpStatus"/>
+      <flow-ref doc:name="global-error-response-sub-flow" doc:id="5f363caf-f397-4ee8-af5a-bc0a05b77e53" name="global-error-response-sub-flow"/>
+		
+               
+            </on-error-continue>
+            <on-error-continue type="APIKIT:NOT_FOUND">
+               
+               <set-variable value="#[404]" doc:name="Set the HTTP Status - 404" doc:id="8b519c33-7027-4ddc-a16c-76dc5a1ec2de" variableName="httpStatus"/>
+      <flow-ref doc:name="global-error-response-sub-flow" doc:id="5f363caf-f397-4ee8-af5a-bc0a05b77e53" name="global-error-response-sub-flow"/>
+		
+               
+            </on-error-continue>
+            <on-error-continue type="APIKIT:METHOD_NOT_ALLOWED">
+             
+             <set-variable value="#[405]" doc:name="Set the HTTP Status - 405" doc:id="8b519c33-7027-4ddc-a16c-76dc5a1ec2de" variableName="httpStatus"/>
+      <flow-ref doc:name="global-error-response-sub-flow" doc:id="5f363caf-f397-4ee8-af5a-bc0a05b77e53" name="global-error-response-sub-flow"/>
+		
+                
+            </on-error-continue>
+            <on-error-continue type="APIKIT:NOT_ACCEPTABLE">
+                
+                <set-variable value="#[406]" doc:name="Set the HTTP Status - 406" doc:id="8b519c33-7027-4ddc-a16c-76dc5a1ec2de" variableName="httpStatus"/>
+      <flow-ref doc:name="global-error-response-sub-flow" doc:id="5f363caf-f397-4ee8-af5a-bc0a05b77e53" name="global-error-response-sub-flow"/>
+		
+               
+            </on-error-continue>
+            <on-error-continue type="APIKIT:UNSUPPORTED_MEDIA_TYPE">
+               <set-variable value="#[415]" doc:name="Set the HTTP Status - 415" doc:id="8b519c33-7027-4ddc-a16c-76dc5a1ec2de" variableName="httpStatus"/>
+      <flow-ref doc:name="global-error-response-sub-flow" doc:id="5f363caf-f397-4ee8-af5a-bc0a05b77e53" name="global-error-response-sub-flow"/>
+		
+            </on-error-continue>
+            <on-error-continue type="APIKIT:NOT_IMPLEMENTED">
+               <set-variable value="#[501]" doc:name="Set the HTTP Status - 501" doc:id="8b519c33-7027-4ddc-a16c-76dc5a1ec2de" variableName="httpStatus"/>
+      <flow-ref doc:name="global-error-response-sub-flow" doc:id="5f363caf-f397-4ee8-af5a-bc0a05b77e53" name="global-error-response-sub-flow"/>
+		
+            </on-error-continue>
+	<on-error-continue enableNotifications="true" doc:name="On Error Continue" when='#[error.errorType.identifier == "BAD_REQUEST" and error.errorType.namespace == "APP"]' logException="true">
+		
+	<set-variable value="#[400]" doc:name="Set the HTTP Status - 400" doc:id="8b519c33-7027-4ddc-a16c-76dc5a1ec2de" variableName="httpStatus"/>
+      <flow-ref doc:name="global-error-response-sub-flow" doc:id="5f363caf-f397-4ee8-af5a-bc0a05b77e53" name="global-error-response-sub-flow"/>
+		
+	</on-error-continue>
+	<on-error-continue enableNotifications="true" doc:name="On Error Continue" when='#[error.errorType.identifier == "SERVICE_NOT_IMPLEMENTED" and error.errorType.namespace == "APP"]' logException="true">
+		
+	<set-variable value="#[500]" doc:name="Set the HTTP Status - 400" doc:id="15941499-6e78-4f2d-a62d-82c8dce8caf2" variableName="httpStatus"/>
+      <flow-ref doc:name="global-error-response-sub-flow" doc:id="770952c3-0fb4-48bd-bfa4-65a0b2272450" name="global-error-response-sub-flow"/>
+		
+	</on-error-continue>
+
+		
+
+		<!-- DB Related issues -->
+
+		<!-- HTTP Requster Related error handling -->
+		<on-error-continue type="HTTP:BAD_REQUEST" enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="3224b4b2-65ad-4320-891c-120bfb39d615" >
+			<set-variable value="#[400]" doc:name="Set the HTTP Status - 400" doc:id="b2bdbabd-6dfa-4a48-9e9f-7b4b96b96b1a" variableName="httpStatus" />
+      <flow-ref doc:name="global-error-response-sub-flow" doc:id="024ea488-0827-4d0c-ab21-8f26c4cef68e" name="global-error-response-sub-flow"/>
+		</on-error-continue>
+		
+		<on-error-continue type="HTTP:CLIENT_SECURITY" enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="b7502352-59b5-4f35-b47e-185ce4adab5d" >
+			<set-variable value="#[401]" doc:name="Set the HTTP Status - 401" doc:id="a36cc7c9-c395-45a4-a6d7-3a04f38afa00" variableName="httpStatus" />
+      <flow-ref doc:name="global-error-response-sub-flow" doc:id="542d546b-a5a8-4478-a6fe-059c2f2db3e3" name="global-error-response-sub-flow"/>
+		</on-error-continue>
+		<on-error-continue type="HTTP:CONNECTIVITY" enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="fd0da218-179b-4804-b558-15d7cbacda49" >
+			<set-variable value="#[503]" doc:name="Set the HTTP Status - 503" doc:id="27d8a548-69ff-4d8b-a9bf-5332a17ee5e9" variableName="httpStatus" />
+      <flow-ref doc:name="global-error-response-sub-flow" doc:id="3db7c0d2-6549-4d20-9afd-ab62f9f20219" name="global-error-response-sub-flow"/>
+		</on-error-continue>
+		<on-error-continue type="HTTP:FORBIDDEN" enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="4964e101-6881-48cc-b196-1a6f64c6eaab" >
+			<set-variable value="#[403]" doc:name="Set the HTTP Status - 403" doc:id="4c7e5541-9ebc-4c5f-8a77-2e682baaca93" variableName="httpStatus" />
+      <flow-ref doc:name="global-error-response-sub-flow" doc:id="5006f08f-b540-4fc9-868c-b7ac648b2f80" name="global-error-response-sub-flow"/>
+		</on-error-continue>
+		<on-error-continue type="HTTP:INTERNAL_SERVER_ERROR" enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="c44efdf6-98ef-4059-b80e-4326220418a2" >
+			<set-variable value="#[500]" doc:name="Set the HTTP Status - 500" doc:id="ad0e9d6c-42f6-4031-92f3-b394b0433294" variableName="httpStatus" />
+      <flow-ref doc:name="global-error-response-sub-flow" doc:id="eb8ddf2d-3085-4dbe-8f21-907812c7249d" name="global-error-response-sub-flow"/>
+		</on-error-continue>
+		<on-error-continue type="HTTP:METHOD_NOT_ALLOWED" enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="78601153-7ef3-44f0-a32c-578c1a98015d" >
+			<set-variable value="#[405]" doc:name="Set the HTTP Status - 405" doc:id="1f186ea4-629d-4c71-af9e-c8edb9628323" variableName="httpStatus" />
+      <flow-ref doc:name="global-error-response-sub-flow" doc:id="d9f0cac5-13e0-451f-82db-0fb67ae63263" name="global-error-response-sub-flow"/>
+		</on-error-continue>
+		<on-error-continue type="HTTP:NOT_ACCEPTABLE" enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="1a7c3930-2382-4c89-b76d-119f1c265b7a" >
+			<set-variable value="#[406]" doc:name="Set the HTTP Status - 406" doc:id="60a37b9d-b7d7-43f5-ac0d-ecc0252783b0" variableName="httpStatus" />
+      <flow-ref doc:name="global-error-response-sub-flow" doc:id="8faf2579-0d8c-45e2-bd98-d1373a64703d" name="global-error-response-sub-flow"/>
+		</on-error-continue>
+		<on-error-continue type="HTTP:NOT_FOUND" enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="2e026787-e459-4dc1-a662-8eb64a91f715" >
+			<set-variable value="#[404]" doc:name="Set the HTTP Status - 404" doc:id="cd06a4ab-d0ff-4cab-84ce-0bf0b1f8097b" variableName="httpStatus" />
+      <flow-ref doc:name="global-error-response-sub-flow" doc:id="41f1d231-b7d6-442c-b68c-ad9ad2cfefa9" name="global-error-response-sub-flow"/>
+		</on-error-continue>
+		<on-error-continue type="HTTP:PARSING" enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="c02768fe-9c91-491c-b940-7e350531e0c0" >
+			<set-variable value="#[400]" doc:name="Set the HTTP Status - 400" doc:id="af5b55b2-53b6-49bd-87ce-da0a63bc5fdd" variableName="httpStatus" />
+      <flow-ref doc:name="global-error-response-sub-flow" doc:id="fde4c0fd-3154-4f77-8ec0-d7644fea0424" name="global-error-response-sub-flow"/>
+		</on-error-continue>
+		<on-error-continue type="HTTP:RETRY_EXHAUSTED" enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="ce59d717-34f6-48cf-9f3e-6ca71dd0b671" >
+			<set-variable value="#[503]" doc:name="Set the HTTP Status - 503" doc:id="04bcbd83-5a96-4f2a-9d94-59a57aa3afdc" variableName="httpStatus" />
+      <flow-ref doc:name="global-error-response-sub-flow" doc:id="0e1cb020-eed4-4f6b-bcbc-652763f2a863" name="global-error-response-sub-flow"/>
+		</on-error-continue>
+		<on-error-continue type="HTTP:SECURITY" enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="aadc2ca4-bc51-4e9f-8ae9-1c090e6fa45f" >
+			<set-variable value="#[401]" doc:name="Set the HTTP Status - 401" doc:id="1566ca24-83a0-4ae3-b774-001b16080f94" variableName="httpStatus" />
+      			<flow-ref doc:name="global-error-response-sub-flow" doc:id="8af8b8e9-5e78-45cd-b3ee-942cac7c6fe4" name="global-error-response-sub-flow"/>
+		</on-error-continue>
+		<on-error-continue type="HTTP:TIMEOUT" enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="9f029de7-5187-46dc-af01-7dbd53778a42" >
+			<set-variable value="#[504]" doc:name="Set the HTTP Status - 504" doc:id="16eaef7b-bd42-4dad-a978-40dcab7315a5" variableName="httpStatus" />
+      			<flow-ref doc:name="global-error-response-sub-flow" doc:id="22517cf7-b863-41fd-b1e6-1ff4b438b329" name="global-error-response-sub-flow"/>
+		</on-error-continue>
+		<on-error-continue type="HTTP:TOO_MANY_REQUESTS" enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="12902e98-0ff7-49d6-98ee-a77970fe5c03" >
+			<set-variable value="#[429]" doc:name="Set the HTTP Status - 429" doc:id="807eeefa-9a4a-4d32-b853-883abdc418ed" variableName="httpStatus" />
+      			<flow-ref doc:name="global-error-response-sub-flow" doc:id="e68a0025-73ff-4f29-864b-5982b550b7f3" name="global-error-response-sub-flow"/>
+		</on-error-continue>
+		<on-error-continue type="HTTP:UNAUTHORIZED" enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="7cafba2d-8075-498e-9942-a82d7bac1fe7" >
+			<set-variable value="#[403]" doc:name="Set the HTTP Status - 403" doc:id="b3401407-3d2d-4279-9f0e-9c431469a1f5" variableName="httpStatus" />
+      			<flow-ref doc:name="global-error-response-sub-flow" doc:id="e3987995-7fb2-4726-a436-93d82f24503c" name="global-error-response-sub-flow"/>
+		</on-error-continue>
+		<on-error-continue type="HTTP:UNSUPPORTED_MEDIA_TYPE" enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="73f62b9b-e364-48c2-b8bd-21df5f4bd23f" >
+			<set-variable value="#[415]" doc:name="Set the HTTP Status - 415" doc:id="e8c0775c-47d7-44c5-aba7-e5330b052f01" variableName="httpStatus" />
+      			<flow-ref doc:name="global-error-response-sub-flow" doc:id="2f2f934a-1a19-47c5-b3d9-d092cf5cb3f1" name="global-error-response-sub-flow"/>
+		</on-error-continue>
+
+		
+
+		<!-- If none of the above matches then handle a the exception using generic handler -->
+		<on-error-continue type="ANY" enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="be3362cb-3030-429a-838c-7137d1bea9e5">
+			<set-variable value="#[500]" doc:name="Set HTTP Status - 500" variableName="httpStatus"/>
+			<flow-ref doc:name="global-error-response-sub-flow" doc:id="e40131f1-ee40-413d-9f03-8c3b512b3c27" name="global-error-response-sub-flow"/>
+		</on-error-continue>
+		
+
+	
+
+</error-handler>
+	<sub-flow name="global-error-response-sub-flow" doc:id="d6387eae-1f72-414f-847a-4b42218315df">
+		
+		<ee:transform doc:name="Compose Error Payload" doc:id="4f8665e1-5992-4260-8285-061d158b502e">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json skipNullOn="everywhere"
+---
+{
+	"error-code": vars.httpStatus,
+	"error-type": if(vars.errorType != null)  vars.errorType else if(error.errorType != null) error.errorType.namespace ++ ":" ++ error.errorType.identifier  else 'Error',
+	"timestamp": now() as String { format: "yyyy-MM-dd'T'HH:mm:ss" },
+	"message": if(vars.errorMessage != null and vars.errorMessage != '') vars.errorMessage else if(error.description != null) error.description else 'error',
+	"external-correlation-id": vars."external-correlation-id"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<min-log:put doc:name="logMessageType" doc:id="c17e6e5b-eaab-49b4-ba43-a5419f4bf570" key="logMessageType" value="EXCEPTION" transactionProperties="#[vars.loggingProperties]" target="loggingProperties"/>
+		<min-log:put doc:name="set Error Code" doc:id="3ff7cd9f-c744-48c5-b6bd-80617e069c50" key="errorCode" value="#[if(vars.errorCode == null) vars.httpStatus else vars.errorCode]" target="loggingProperties" transactionProperties="#[vars.loggingProperties]"/>
+		<min-log:put doc:name="set Error Type" doc:id="dca67160-0368-40a4-bd13-dd482c33973b" key="errorType" value='#[if(vars.errorType == null) if(error.errorType != null) error.errorType.namespace ++ ":" ++ error.errorType.identifier else "ERROR" else vars.errorType]' target="loggingProperties" transactionProperties="#[vars.loggingProperties]"/>
+		<min-log:put doc:name="set Error Description" doc:id="1125f0d6-57b4-485e-b381-b2d7c670514a" key="errorDescription" value="#[if(vars.errorMessage != null and vars.errorMessage != '') vars.errorMessage else if(error.description != null) error.description else 'error']" target="loggingProperties" transactionProperties="#[vars.loggingProperties]"/>
+		<min-log:put doc:name="Set Detailed Description" doc:id="2a0a869a-5fb1-4281-a851-0c0220428de2" key="detailedDescription" value="#[error.detailedDescription]" target="loggingProperties" transactionProperties="#[vars.loggingProperties]"/>
+		<min-log:error doc:name="Error" doc:id="6610290a-0997-4243-96b8-7e73104ed9e8" msg="#['Exception']" transactionProperties="#[vars.loggingProperties]"/>
+
+
+    
+
+</sub-flow>
+
+	
+</mule>	

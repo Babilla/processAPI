@@ -1,0 +1,66 @@
+#%RAML 1.0
+baseUri: https://anypoint.mulesoft.com/mocking/api/v1/links/9f1cde13-7970-4cff-8a67-dd23209c19f8/ # 
+title: routes-schedules-pro-api
+version: 1.0.0
+protocols: HTTP
+mediaType: application/json
+description: Process API to Retrieve consolidated Routes and Schedules
+
+uses:
+  lib: exchange_modules/48d79b74-3f50-4882-bc79-83f4d312d3ce/mule-spec-lib/1.0.0/mule-spec-lib.raml
+
+types:
+  routes: !include dataType/get-route-type.raml
+  schedules: !include dataType/get-schedule-type.raml
+
+/booking/{transportType}:
+  uriParameters:
+    transportType: 
+      description: unique transportType
+      type: string
+      required: true
+  /routes:    
+    get:
+      is: [lib.trackable,lib.errorCode ]
+      description: To consolidate routes from multiple transport providers.
+      queryParameters:
+        companyCode?: string
+        departureLocationCode?: string
+      responses:
+        200:
+          body:
+            application/json:
+              type: routes[]
+              example: !include examples/get-routes.raml
+              
+
+  /schedules:    
+    get:
+      is: [lib.trackable, lib.errorCode]
+      description: To consolidate schedules from multiple transport providers.
+      queryParameters:
+        companyCode?: string
+        
+        departureLocationCode:
+          type: string
+          required: true
+        destinationLocationCode:
+          type: string
+          required: true
+        requestTimezone:
+          type: string
+          required: true
+      responses:
+        200:
+          body:
+            application/json:
+              type: schedules
+              example: !include examples/get-schedules.raml
+              
+
+    
+      
+
+
+
+

@@ -1,0 +1,17 @@
+#%RAML 1.0 SecurityScheme
+type: Basic Authentication
+description: |
+  This API supports Basic authentication for authenticating
+  all API requests using client ID and secret key.
+describedBy:
+  headers:
+    username:
+      type: string
+      required: true
+    password:
+      type: string
+      required: true
+  responses:
+    401:
+      description: |
+        Unauthorized.

@@ -1,0 +1,101 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<types:mule xmlns:types="http://www.mulesoft.org/schema/mule/types">
+  <types:catalog>
+    <types:type name="getRouteSysOutput" format="json">
+      <types:shape format="weave" example="examples/get-route-response.json"><![CDATA[%dw 2.0
+
+type getRouteSysOutput = Array<{|  originLocation: {| locationCode: String |},   destinationLocation: {| locationCode: String |}|}> {"example": "[{\\\"originLocation\\\":{\\\"locationCode\\\":\\\"BEN-SG\\\"},\\\"destinationLocation\\\":{\\\"locationCode\\\":\\\"KLG-MY\\\"}}]"}
+
+]]></types:shape>
+    </types:type>
+    <types:type name="schedule-input" format="json">
+      <types:shape format="weave" example="get-schedule-response.json"><![CDATA[%dw 2.0
+
+type schedule_input = {|
+  departureSchedules: Array<{|    availableSeats: Number {"typeId": "int"},     departureDateTime: String,     travelRoute: {|      destinationLocation: {| locationCode: String |},       originLocation: {| locationCode: String |}    |}  |}>
+|} {"example": "{\\\"departureSchedules\\\":[{\\\"availableSeats\\\":20,\\\"departureDateTime\\\":\\\"2019-04-30T16:41:41.090Z\\\",\\\"travelRoute\\\":{\\\"destinationLocation\\\":{\\\"locationCode\\\":\\\"KLG-MY\\\"},\\\"originLocation\\\":{\\\"locationCode\\\":\\\"BEN-SG\\\"}}},{\\\"availableSeats\\\":30,\\\"departureDateTime\\\":\\\"2019-04-30T16:41:41.090Z\\\",\\\"travelRoute\\\":{\\\"destinationLocation\\\":{\\\"locationCode\\\":\\\"KLG-MY\\\"},\\\"originLocation\\\":{\\\"locationCode\\\":\\\"BL-SG\\\"}}}]}"}
+
+]]></types:shape>
+    </types:type>
+    <types:type name="schedule-output" format="json">
+      <types:shape format="weave" example="api/examples/get-schedules.raml"><![CDATA[%dw 2.0
+
+type schedule_output = {|
+  departureSchedules: Array<{|    availableSeats: Number {"typeId": "int"},     departureDateTime: String,     travelRoute: {|      destinationLocation: {|        locationCode: String,         locationDesc: String      |},       originLocation: {|        locationCode: String,         locationDesc: String      |}    |}  |}>
+|} {"example": "{\\\"departureSchedules\\\":[{\\\"availableSeats\\\":20,\\\"departureDateTime\\\":\\\"2019-04-30T16:41:41.090Z\\\",\\\"travelRoute\\\":{\\\"destinationLocation\\\":{\\\"locationCode\\\":\\\"KLG-MY\\\",\\\"locationDesc\\\":\\\"Klang Malaysia\\\"},\\\"originLocation\\\":{\\\"locationCode\\\":\\\"BEN-SG\\\",\\\"locationDesc\\\":\\\"Beauna Vista Singapore\\\"}}},{\\\"availableSeats\\\":30,\\\"departureDateTime\\\":\\\"2019-04-30T18:41:41.090Z\\\",\\\"travelRoute\\\":{\\\"destinationLocation\\\":{\\\"locationCode\\\":\\\"KLG-MY\\\",\\\"locationDesc\\\":\\\"Klang Malaysia\\\"},\\\"originLocation\\\":{\\\"locationCode\\\":\\\"BL-SG\\\",\\\"locationDesc\\\":\\\"Beauna Vista Singapore\\\"}}}]}"}
+
+]]></types:shape>
+    </types:type>
+  </types:catalog>
+  <types:enrichment select="#c486dfe6-fd89-4d43-abb1-0893ee892ee1">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="getRouteSysOutput"/>
+        </types:message>
+      </types:input-event>
+      <types:output-event>
+        <types:message>
+          <types:payload type="getRouteSysOutput"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#a04ec1c3-6e07-48d0-91b2-4b0db2b506c8">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="getRouteSysOutput"/>
+        </types:message>
+      </types:input-event>
+      <types:output-event>
+        <types:message>
+          <types:payload type="getRouteSysOutput"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#d0a41103-7141-45c7-abe3-1c6ce70e618d">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="getRouteSysOutput"/>
+        </types:message>
+      </types:input-event>
+      <types:output-event>
+        <types:message>
+          <types:payload type="getRouteSysOutput"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#caad1154-48a2-493c-bf81-40d20542916a">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="getRouteSysOutput"/>
+        </types:message>
+      </types:input-event>
+      <types:output-event>
+        <types:message>
+          <types:payload type="getRouteSysOutput"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#cde87651-46bd-4fa6-abf3-a267f5e97b57"/>
+  <types:enrichment select="#fbe26889-fce3-4f64-b4a9-77c3543498a2">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="schedule-input"/>
+        </types:message>
+      </types:input-event>
+      <types:output-event>
+        <types:message>
+          <types:payload type="schedule-output"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+</types:mule>

@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:min-log="http://www.mulesoft.org/schema/mule/min-log" xmlns:tls="http://www.mulesoft.org/schema/mule/tls"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd
+http://www.mulesoft.org/schema/mule/min-log http://www.mulesoft.org/schema/mule/min-log/current/mule-min-log.xsd">
+	
+	<flow name="retrieve-routes-implementationFlow" doc:id="f7ba2333-199e-4281-8f20-6e59b461bfb5" >
+		<min-log:info doc:name="Info" doc:id="a7ffd26a-be08-4b1d-aff3-24a3a7fc294e" msg="Based on the company code status decide the route" transactionProperties="#[vars.loggingProperties]"/>
+		<choice doc:name="Choice" doc:id="379f7d22-37ec-44aa-942f-2427e0d99d79" >
+			<when expression="#[vars.companyCode == p('secure::company.code1')]">
+				<flow-ref doc:name="retrieveTransNationalRoutesFlow" doc:id="3ee4e001-d193-415c-a384-db760143a282" name="retrieveTransNationalRoutesFlow"/>
+				<min-log:info doc:name="Info" doc:id="4414c009-2254-4ec2-a7c7-677f16951b02" msg="Redirecting to TransNational Route flow" transactionProperties="#[vars.loggingProperties]"/>
+			</when>
+			<when expression="#[vars.companyCode == p('secure::comapny.code2')]">
+				<flow-ref doc:name="retrieveFirstCoachRoutesFlow" doc:id="01006d3f-7380-459e-b989-8459f074262a" name="retrieveFirstCoachRoutesFlow"/>
+				<min-log:info doc:name="Info" doc:id="dfef78fd-d5ad-49e5-9f10-7277d370b244" msg="redirecting to FirstCoach Routes Flow" transactionProperties="#[vars.loggingProperties]"/>
+			</when>
+			<otherwise >
+				<flow-ref doc:name="retrieveConsolidatedRoutesFlow" doc:id="21bf96c2-a055-4703-93be-064f23057117" name="retrieveConsolidatedRoutesFlow"/>
+				<min-log:info doc:name="Info" doc:id="7d989ef6-4be7-4732-b887-73ffa1c39ee8" msg="Redirecting to both system when company code empty" transactionProperties="#[vars.loggingProperties]"/>
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="retrieveTransNationalRoutesFlow" doc:id="0ea441ec-8e50-41db-88a2-5398b98fc04b" >
+		<http:request method="GET" doc:name="transNationalSysApi" doc:id="6f94d0c2-fe97-4554-b71f-cb371ea0bb47" config-ref="trans-national-systemApi-request-config" path="/sea/transnational/routes" responseTimeout="30000">
+			<reconnect frequency="3000" count="5" />
+		</http:request>
+		<min-log:info doc:name="Info" doc:id="b96843f8-170c-41c6-94f9-6188d62cce51" msg="After the Request call to TransNational System Api" transactionProperties="#[vars.loggingProperties]"/>
+		<ee:transform doc:name="Transform Message" doc:id="136c6802-a52a-495c-8c6a-85c817135ddd" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+var depRoute= (payload map ( payload01 , indexOfPayload01 ) -> {
+	companyCode: vars.companyCode,
+	originLocation: {
+		locationCode: payload01.originLocation.locationCode,
+		locationDesc: p('secure::locationMapping.locationDescription.' ++ payload01.originLocation.locationCode)
+	},
+	destinationLocation: {
+		locationCode: payload01.destinationLocation.locationCode,
+		locationDesc: p('secure::locationMapping.locationDescription.' ++ payload01.destinationLocation.locationCode)
+	} 
+})
+---
+
+if(vars.departureLocationCode != "" ) depRoute filter ($.originLocation.locationCode == vars.departureLocationCode) else depRoute 
+
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<error-handler ref="httpError_Handler" />
+	</flow>
+	<flow name="retrieveFirstCoachRoutesFlow" doc:id="ea1a4c55-d8b7-4009-a6c1-f6b5dc24b08b" >
+		<http:request method="GET" doc:name="firstCoachSysApi" doc:id="241f38a3-ae3c-4a15-9eb0-bc25bb24c8c4" config-ref="first-coach-sysApi-request-config" path="/sea/firstcoach/routes">
+			<reconnect frequency="3000" count="4" />
+		</http:request>
+		<min-log:info doc:name="Info" doc:id="830fc2e8-809a-485a-8105-071ecaf7a0cb" msg="After the Request call to FirstCoach System Api" transactionProperties="#[vars.loggingProperties]"/>
+		<ee:transform doc:name="Transform Message" doc:id="fd1ec4fe-48c5-48fa-86c1-44e30910fe2c" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+var depRoute= (payload map ( payload01 , indexOfPayload01 ) -> {
+	companyCode: vars.companyCode,
+	originLocation: {
+		locationCode: payload01.originLocation.locationCode,
+		locationDesc: p('secure::locationMapping.locationDescription.' ++ payload01.originLocation.locationCode)
+	},
+	destinationLocation: {
+		locationCode: payload01.destinationLocation.locationCode,
+		locationDesc: p('secure::locationMapping.locationDescription.' ++ payload01.destinationLocation.locationCode)
+	} 
+})
+---
+
+if(vars.departureLocationCode != "" ) depRoute filter ($.originLocation.locationCode == vars.departureLocationCode) else depRoute 
+
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<error-handler ref="httpError_Handler" />
+	</flow>
+	<flow name="retrieveConsolidatedRoutesFlow" doc:id="a45aeb66-0fc2-4b17-a0d6-754544b24689" >
+		<min-log:info doc:name="Info" doc:id="a112529a-119b-4eb5-ad67-01b280f8cdb8" msg="routing to both the system parallely through scatter gather" transactionProperties="#[vars.loggingProperties]"/>
+		<scatter-gather doc:name="Scatter-Gather" doc:id="6873e4af-3860-43d3-86f0-587dbd6189f4">
+			<route>
+				<try doc:name="Try" doc:id="f4d83c78-3374-40fa-a1d6-df32bdab669e" >
+					<http:request method="GET" doc:name="transNationalSysApi" doc:id="dedea471-66e0-49da-b2bc-de88c7505fa8" config-ref="trans-national-systemApi-request-config" path="/sea/transnational/routes" outputMimeType="application/json">
+					<reconnect frequency="3000" count="4" />
+				</http:request>
+					<error-handler >
+						<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="9546e2f1-969f-4fc3-966d-7409551ee537" >
+							<ee:transform doc:name="Transform Message" doc:id="4e02803e-fbdb-4ff8-a41a-cc03a13ccb4a" >
+								<ee:message >
+									<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+[]]]></ee:set-payload>
+								</ee:message>
+							</ee:transform>
+						</on-error-continue>
+					</error-handler>
+				</try>
+				<ee:transform doc:name="Transform Message" doc:id="c486dfe6-fd89-4d43-abb1-0893ee892ee1">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+
+---
+payload map ( payload01 , indexOfPayload01 ) -> {
+	companyCode: "Transnational",
+	originLocation: {
+		locationCode: payload01.originLocation.locationCode,
+		locationDesc: p('secure::locationMapping.locationDescription.' ++ payload01.originLocation.locationCode)
+	},
+	destinationLocation: {
+		locationCode: payload01.destinationLocation.locationCode,
+		locationDesc: p('secure::locationMapping.locationDescription.' ++ payload01.destinationLocation.locationCode)
+	} 
+}
+]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</route>
+			<route>
+				<try doc:name="Try" doc:id="c4dfaa3f-11ef-406a-886a-90a45eaa12ee" >
+					<http:request method="GET" doc:name="firstCoachSysApi" doc:id="315ede54-e456-46be-b5c3-76b62efa77cc" config-ref="first-coach-sysApi-request-config" path="/sea/first/routes" outputMimeType="application/json">
+					<reconnect frequency="3000" count="4" />
+				</http:request>
+					<error-handler >
+						<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="dde8febd-8f6c-46b9-bbc4-59170a7266bd" >
+							<ee:transform doc:name="Transform Message" doc:id="dbdbc2cd-7749-423d-bb2f-8d28f5b35c96" >
+								<ee:message >
+									<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+[]]]></ee:set-payload>
+								</ee:message>
+							</ee:transform>
+						</on-error-continue>
+					</error-handler>
+				</try>
+				<ee:transform doc:name="Transform Message" doc:id="a04ec1c3-6e07-48d0-91b2-4b0db2b506c8">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+
+---
+payload map ( payload01 , indexOfPayload01 ) -> {
+	companyCode: "FirstCoach",
+	originLocation: {
+		locationCode: payload01.originLocation.locationCode,
+		locationDesc: p('secure::locationMapping.locationDescription.' ++ payload01.originLocation.locationCode)
+	},
+	destinationLocation: {
+		locationCode: payload01.destinationLocation.locationCode,
+		locationDesc: p('secure::locationMapping.locationDescription.' ++ payload01.destinationLocation.locationCode)
+	} 
+}
+]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</route>
+		</scatter-gather>
+		<min-log:info doc:name="Info" doc:id="035f1195-8ad3-4b70-9611-5bad423e2059" msg="After the scatter gather scope and sending to flatten the payload results" transactionProperties="#[vars.loggingProperties]"/>
+		<ee:transform doc:name="Transform Message" doc:id="544da18a-e51a-4a70-899b-7e19cfbb7dfa">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+
+---
+if(vars.departureLocationCode !="")(flatten(payload..payload))filter ($.originLocation.locationCode == vars.departureLocationCode) 
+else
+flatten(payload..payload)]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<error-handler ref="httpError_Handler" />
+	</flow>
+</mule>

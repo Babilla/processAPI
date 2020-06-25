@@ -1,0 +1,11 @@
+#%RAML 1.0 Library
+usage: This is RAML Library file
+securitySchemes:
+  basicAuth: !include exchange_modules/48d79b74-3f50-4882-bc79-83f4d312d3ce/basic-auth-securityscheme/1.0.0/basic-auth-securityscheme.raml
+  
+types:
+  errorResponse: !include exchange_modules/48d79b74-3f50-4882-bc79-83f4d312d3ce/error-datatype/1.0.0/error-datatype.raml
+
+traits:
+  trackable: !include exchange_modules/48d79b74-3f50-4882-bc79-83f4d312d3ce/trackable-trait/1.0.0/trackable-trait.raml
+  errorCode: !include exchange_modules/48d79b74-3f50-4882-bc79-83f4d312d3ce/error-code-trait/1.0.0/error-code-trait.raml
